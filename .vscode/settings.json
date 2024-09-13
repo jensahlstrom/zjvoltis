@@ -1,0 +1,13 @@
+{
+    "workbench.colorCustomizations": {
+        "[*Light*]": {
+            "editorStickyScroll.background": "#eeeeff"
+        },
+        "[*Dark*]": {
+            "editorStickyScroll.background": "#1111ff"
+        },
+        "activityBar.background": "#25a589",
+        "titleBar.activeBackground": "#1b8569",
+        "titleBar.activeForeground": "#fcfefd"
+    }
+}
