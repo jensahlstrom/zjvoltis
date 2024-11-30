@@ -5,6 +5,7 @@ pub struct Zjvoltis {
     pub game_over: Option<i32>,
     // difference in material (positive for white, negative for black)
     pub material: i32,
+    //pub hash: u64,
 }
 
 impl Zjvoltis {
@@ -270,7 +271,7 @@ impl ZjvoltisMove {
     pub fn from_string(s: &str) -> ZjvoltisMove {
         let mut chars = s.chars();
         let col = chars.next().unwrap() as usize - 'a' as usize;
-        let row = chars.next().unwrap() as usize - '1' as usize;
+        let row = chars.next().unwrap() as usize - '0' as usize;
         let hgrad = chars.next().unwrap() as usize - '0' as usize;
         ZjvoltisMove { row, col, hgrad }
     }
@@ -280,7 +281,7 @@ impl ZjvoltisMove {
         format!(
             "{}{}{}",
             (self.col as u8 + 'a' as u8) as char,
-            (self.row as u8 + '1' as u8) as char,
+            (self.row as u8 + '0' as u8) as char,
             self.hgrad
         )
     }
@@ -311,7 +312,7 @@ pub mod tests {
     fn test_make_moves() {
         let game = Zjvoltis::new();
         // Move the Zebra
-        let m1 = ZjvoltisMove::from_string("i42");
+        let m1 = ZjvoltisMove::from_string("i32");
         let game2 = game.make_move(&m1).unwrap();
         assert_eq!(game2.board[4][9], 'Z');
         assert_eq!(game2.board[5][9], 'Z');
@@ -322,7 +323,7 @@ pub mod tests {
         assert_eq!(game2.board[1][7], '.');
         assert!(!game2.white_to_move);
         // capture the Zebra
-        let m2 = ZjvoltisMove::from_string("i73");
+        let m2 = ZjvoltisMove::from_string("i63");
         let game3: Zjvoltis = game2.make_move(&m2).unwrap();
         assert_eq!(game3.board[4][9], '.');
         assert_eq!(game3.board[5][9], 'v');
@@ -332,7 +333,7 @@ pub mod tests {
         // The Zebra has been captured, so the evaluation should be -4
         assert_eq!(game3.evaluate(), -4);
         // capture the Vampire bat
-        let m3 = ZjvoltisMove::from_string("j42");
+        let m3 = ZjvoltisMove::from_string("j32");
         let game4: Zjvoltis = game3.make_move(&m3).unwrap();
         assert_eq!(game4.board[4][9], 'I');
         assert_eq!(game4.board[5][9], 'I');
@@ -341,11 +342,11 @@ pub mod tests {
         // The vampire bat has been captured, so the evaluation should be -1
         assert_eq!(game4.evaluate(), -1);
         // Move the tiger
-        let m4 = ZjvoltisMove::from_string("e72");
+        let m4 = ZjvoltisMove::from_string("e62");
         let game5: Zjvoltis = game4.make_move(&m4).unwrap();
         // Move the insect, capture the orangutan, game should be over
         print!("{}", game5.to_string());
-        let m5 = ZjvoltisMove::from_string("j72");
+        let m5 = ZjvoltisMove::from_string("j62");
         let game6: Zjvoltis = game5.make_move(&m5).unwrap();
         assert_eq!(game6.game_over, Some(1));
     }
