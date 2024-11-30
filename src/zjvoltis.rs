@@ -1,3 +1,4 @@
+#[derive(Clone, Copy)]
 pub struct Zjvoltis {
     // The board is represented as a 10x10 array of characters.
     pub board: [[char; 10]; 10],
@@ -5,7 +6,6 @@ pub struct Zjvoltis {
     pub game_over: Option<i32>,
     // difference in material (positive for white, negative for black)
     pub material: i32,
-    //pub hash: u64,
 }
 
 impl Zjvoltis {
@@ -94,7 +94,7 @@ impl Zjvoltis {
     }
 
     // Make a move on the board
-    pub fn make_move(&self, m: &ZjvoltisMove) -> Option<Zjvoltis> {
+    pub fn make_move(&self, m: ZjvoltisMove) -> Option<Zjvoltis> {
         // Check if the move is within the bounds of the board.
         if m.row > 9 || m.col > 9 {
             return None;
@@ -217,7 +217,7 @@ impl Zjvoltis {
             for col in 0..10 {
                 for hgrad in 1..3 {
                     let m = ZjvoltisMove { row, col, hgrad };
-                    let board = self.make_move(&m);
+                    let board = self.make_move(m);
                     if board.is_some() {
                         moves.push((m, board.unwrap()));
                     }
@@ -257,6 +257,7 @@ fn rotate_point((row, col): (isize, isize), (crow, ccol): (usize, usize)) -> (is
     ((nzrow + crow as isize), (nzcol + ccol as isize))
 }
 
+#[derive(Clone, Copy)]
 pub struct ZjvoltisMove {
     // 0-9 for the row
     pub row: usize,
@@ -313,7 +314,7 @@ pub mod tests {
         let game = Zjvoltis::new();
         // Move the Zebra
         let m1 = ZjvoltisMove::from_string("i32");
-        let game2 = game.make_move(&m1).unwrap();
+        let game2 = game.make_move(m1).unwrap();
         assert_eq!(game2.board[4][9], 'Z');
         assert_eq!(game2.board[5][9], 'Z');
         assert_eq!(game2.board[4][8], 'Z');
@@ -324,7 +325,7 @@ pub mod tests {
         assert!(!game2.white_to_move);
         // capture the Zebra
         let m2 = ZjvoltisMove::from_string("i63");
-        let game3: Zjvoltis = game2.make_move(&m2).unwrap();
+        let game3: Zjvoltis = game2.make_move(m2).unwrap();
         assert_eq!(game3.board[4][9], '.');
         assert_eq!(game3.board[5][9], 'v');
         assert_eq!(game3.board[6][8], 'v');
@@ -334,7 +335,7 @@ pub mod tests {
         assert_eq!(game3.evaluate(), -4);
         // capture the Vampire bat
         let m3 = ZjvoltisMove::from_string("j32");
-        let game4: Zjvoltis = game3.make_move(&m3).unwrap();
+        let game4: Zjvoltis = game3.make_move(m3).unwrap();
         assert_eq!(game4.board[4][9], 'I');
         assert_eq!(game4.board[5][9], 'I');
         assert_eq!(game4.board[6][9], 'I');
@@ -343,11 +344,11 @@ pub mod tests {
         assert_eq!(game4.evaluate(), -1);
         // Move the tiger
         let m4 = ZjvoltisMove::from_string("e62");
-        let game5: Zjvoltis = game4.make_move(&m4).unwrap();
+        let game5: Zjvoltis = game4.make_move(m4).unwrap();
         // Move the insect, capture the orangutan, game should be over
         print!("{}", game5.to_string());
         let m5 = ZjvoltisMove::from_string("j62");
-        let game6: Zjvoltis = game5.make_move(&m5).unwrap();
+        let game6: Zjvoltis = game5.make_move(m5).unwrap();
         assert_eq!(game6.game_over, Some(1));
     }
 
@@ -355,7 +356,7 @@ pub mod tests {
     fn test_illegal_move_own_piece() {
         let game = Zjvoltis::new();
         let m1 = ZjvoltisMove::from_string("h31");
-        let game2 = game.make_move(&m1);
+        let game2 = game.make_move(m1);
         assert!(game2.is_none());
     }
 
@@ -363,7 +364,7 @@ pub mod tests {
     fn test_illegal_move_out_of_bounds() {
         let game = Zjvoltis::new();
         let m1 = ZjvoltisMove::from_string("i41");
-        let game2 = game.make_move(&m1);
+        let game2 = game.make_move(m1);
         assert!(game2.is_none());
     }
 

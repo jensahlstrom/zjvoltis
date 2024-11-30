@@ -1,11 +1,24 @@
+use std::sync::mpsc::Sender;
+use std::time::Duration;
+
 use crate::zjvoltis::{Zjvoltis, ZjvoltisMove};
 
-fn minimax(game: Zjvoltis, depth: i32) -> (i32, Option<ZjvoltisMove>, i32) {
+fn iterate(game: Zjvoltis, channel: Sender<(i32, i32, Option<ZjvoltisMove>, i32, Duration)>) {
+    let mut depth = 1;
+    loop {
+        let now = SystemTime::now();
+        let (score, best_move, nodes) = minimax(&game, depth);
+        let _ = channel.send((depth, score, best_move, nodes, now.elapsed().unwrap()));
+        depth += 1;
+    }
+}
+
+fn minimax(game: &Zjvoltis, depth: i32) -> (i32, Option<ZjvoltisMove>, i32) {
     let maximize = game.white_to_move;
     return minimax_ab(game, depth, maximize, i32::MIN, i32::MAX);
 }
 fn minimax_ab(
-    game: Zjvoltis,
+    game: &Zjvoltis,
     depth: i32,
     maximize: bool,
     mut alpha: i32,
@@ -25,7 +38,7 @@ fn minimax_ab(
         moves.reverse();
         let mut best = i32::MIN;
         for (m, child) in moves {
-            let (val, _, n) = minimax_ab(child, depth - 1, false, alpha, beta);
+            let (val, _, n) = minimax_ab(&child, depth - 1, false, alpha, beta);
             nodes += n;
             if val > best {
                 best_move = Some(m);
@@ -40,7 +53,7 @@ fn minimax_ab(
     } else {
         let mut best = i32::MAX;
         for (m, child) in moves {
-            let (val, _, n) = minimax_ab(child, depth - 1, true, alpha, beta);
+            let (val, _, n) = minimax_ab(&child, depth - 1, true, alpha, beta);
             nodes += n;
             if val < best {
                 best_move = Some(m);
