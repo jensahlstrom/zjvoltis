@@ -185,8 +185,6 @@ impl Zjvoltis {
             return None;
         }
 
-        // Perform the move.
-        let mut new_board = self.board.clone();
         let mut squares = Vec::new();
         let mut game_over = None;
         let mut new_material = self.material;
@@ -196,22 +194,23 @@ impl Zjvoltis {
             for col in 0..10 {
                 if !(row == m.row && col == m.col) && self.board[row][col] == piece {
                     squares.push((row, col));
-                    new_board[row][col] = 0;
                 }
             }
         }
 
+        let mut new_squares = Vec::new();
+
         // Rotate the piece using the squares found
-        for (row, col) in squares {
+        for (row, col) in &squares {
             let (new_row, new_col) = match m.hgrad {
-                1 => rotate_point((row as isize, col as isize), (m.row, m.col)),
+                1 => rotate_point((*row as isize, *col as isize), (m.row, m.col)),
                 2 => rotate_point(
-                    rotate_point((row as isize, col as isize), (m.row, m.col)),
+                    rotate_point((*row as isize, *col as isize), (m.row, m.col)),
                     (m.row, m.col),
                 ),
                 3 => rotate_point(
                     rotate_point(
-                        rotate_point((row as isize, col as isize), (m.row, m.col)),
+                        rotate_point((*row as isize, *col as isize), (m.row, m.col)),
                         (m.row, m.col),
                     ),
                     (m.row, m.col),
@@ -230,6 +229,19 @@ impl Zjvoltis {
             {
                 return None;
             }
+            new_squares.push((new_row as usize, new_col as usize));
+        }
+
+        // Perform the move.
+        let mut new_board = self.board.clone();
+
+        // Clear the old squares
+        for (row, col) in &squares {
+            new_board[*row][*col] = 0;
+        }
+
+        for (row, col) in new_squares {
+            let piece_in_square = self.board[row][col];
             // If it's an enemy piece, remove all of it.
             if piece_in_square != 0 && self.white_to_move != is_white(piece_in_square) {
                 for row in 0..10 {
@@ -253,7 +265,7 @@ impl Zjvoltis {
                 }
             }
 
-            new_board[new_row as usize][new_col as usize] = piece;
+            new_board[row][col] = piece;
         }
 
         // check if the four center squares of the new board has the orangutan
