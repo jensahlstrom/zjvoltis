@@ -319,7 +319,7 @@ impl Zjvoltis {
 // Create a vector of squares in a diamond around the specified square
 // This is all the squares that a piece can be on if it's on the specificed square
 fn diamond_around_square(row: usize, col: usize, include_self: bool) -> Vec<(usize, usize)> {
-    let mut squares = Vec::with_capacity(24);
+    let mut squares = Vec::with_capacity(25);
     for i in 0..4 {
         for j in 0..4 {
             if !(i == 0 && j == 0 && !include_self) && i + j < 4 {
