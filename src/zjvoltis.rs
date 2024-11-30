@@ -1,7 +1,77 @@
+// Square values
+// first bit for color
+const WHITE: u8 = 0;
+const BLACK: u8 = 1;
+// rest of the bits for piece
+const ZEBRA: u8 = 2;
+const JAGUAR: u8 = 4;
+const VAMPIRE: u8 = 6;
+const ORANGUTAN: u8 = 8;
+const LEOPARD: u8 = 10;
+const TIGER: u8 = 12;
+const INSECT: u8 = 14;
+const SEAHORSE: u8 = 16;
+
+// Is piece white?
+fn is_white(piece: u8) -> bool {
+    piece % 2 == WHITE
+}
+
+// Convert piece character to piece value
+fn piece_value(piece: char) -> u8 {
+    match piece {
+        'Z' => WHITE | ZEBRA,
+        'J' => WHITE | JAGUAR,
+        'V' => WHITE | VAMPIRE,
+        'O' => WHITE | ORANGUTAN,
+        'L' => WHITE | LEOPARD,
+        'T' => WHITE | TIGER,
+        'I' => WHITE | INSECT,
+        'S' => WHITE | SEAHORSE,
+        'z' => BLACK | ZEBRA,
+        'j' => BLACK | JAGUAR,
+        'v' => BLACK | VAMPIRE,
+        'o' => BLACK | ORANGUTAN,
+        'l' => BLACK | LEOPARD,
+        't' => BLACK | TIGER,
+        'i' => BLACK | INSECT,
+        's' => BLACK | SEAHORSE,
+        _ => 0,
+    }
+}
+// Convert piece value to piece character
+fn piece_char(piece: u8) -> char {
+    if piece % 2 == BLACK {
+        return match piece & 0b11111110 {
+            ZEBRA => 'z',
+            JAGUAR => 'j',
+            VAMPIRE => 'v',
+            ORANGUTAN => 'o',
+            LEOPARD => 'l',
+            TIGER => 't',
+            INSECT => 'i',
+            SEAHORSE => 's',
+            _ => '.',
+        };
+    } else {
+        return match piece {
+            ZEBRA => 'Z',
+            JAGUAR => 'J',
+            VAMPIRE => 'V',
+            ORANGUTAN => 'O',
+            LEOPARD => 'L',
+            TIGER => 'T',
+            INSECT => 'I',
+            SEAHORSE => 'S',
+            _ => '.',
+        };
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Zjvoltis {
     // The board is represented as a 10x10 array of characters.
-    pub board: [[char; 10]; 10],
+    pub board: [[u8; 10]; 10],
     pub white_to_move: bool,
     pub game_over: Option<i32>,
     // difference in material (positive for white, negative for black)
@@ -18,7 +88,7 @@ impl Zjvoltis {
 
         let mut row = 9;
         let mut col = 0;
-        let mut board = [['.'; 10]; 10];
+        let mut board = [[0; 10]; 10];
         for c in board_str.chars() {
             if c.is_numeric() {
                 col += c.to_digit(10).unwrap() as usize;
@@ -30,7 +100,7 @@ impl Zjvoltis {
                 row -= 1;
                 col = 0;
             } else {
-                board[row][col] = c;
+                board[row][col] = piece_value(c);
                 col += 1;
             }
         }
@@ -49,14 +119,14 @@ impl Zjvoltis {
         for row in (0..10).rev() {
             let mut empty = 0;
             for col in 0..10 {
-                if self.board[row][col] == '.' {
+                if self.board[row][col] == 0 {
                     empty += 1;
                 } else {
                     if empty > 0 {
                         board_str.push_str(&empty.to_string());
                         empty = 0;
                     }
-                    board_str.push(self.board[row][col]);
+                    board_str.push(piece_char(self.board[row][col]));
                 }
             }
             if empty == 10 {
@@ -81,7 +151,7 @@ impl Zjvoltis {
         let mut s = String::new();
         for row in (0..10).rev() {
             for col in 0..10 {
-                s.push(self.board[row][col]);
+                s.push(piece_char(self.board[row][col]));
             }
             s.push('\n');
         }
@@ -106,12 +176,12 @@ impl Zjvoltis {
 
         // Check that there is a piece on the board at the given square.
         let piece = self.board[m.row][m.col];
-        if piece == '.' {
+        if piece == 0 {
             return None;
         }
 
         // Check that the piece belongs to the current player.
-        if self.white_to_move == piece.is_lowercase() {
+        if self.white_to_move != is_white(piece) {
             return None;
         }
 
@@ -126,11 +196,11 @@ impl Zjvoltis {
             for col in 0..10 {
                 if !(row == m.row && col == m.col) && self.board[row][col] == piece {
                     squares.push((row, col));
-                    // Clear square from new board
-                    new_board[row][col] = '.';
+                    new_board[row][col] = 0;
                 }
             }
         }
+
         // Rotate the piece using the squares found
         for (row, col) in squares {
             let (new_row, new_col) = match m.hgrad {
@@ -155,17 +225,17 @@ impl Zjvoltis {
             let piece_in_square = self.board[new_row as usize][new_col as usize];
             // If it's our own piece, we can't move there.
             if piece_in_square != piece
-                && piece_in_square != '.'
-                && self.white_to_move == piece_in_square.is_uppercase()
+                && piece_in_square != 0
+                && self.white_to_move == is_white(piece_in_square)
             {
                 return None;
             }
             // If it's an enemy piece, remove all of it.
-            if piece_in_square != '.' && self.white_to_move == piece_in_square.is_lowercase() {
+            if piece_in_square != 0 && self.white_to_move != is_white(piece_in_square) {
                 for row in 0..10 {
                     for col in 0..10 {
                         if new_board[row][col] == piece_in_square {
-                            new_board[row][col] = '.';
+                            new_board[row][col] = 0;
                             if self.white_to_move {
                                 new_material += 1;
                             } else {
@@ -175,10 +245,10 @@ impl Zjvoltis {
                     }
                 }
                 // Game over if it was the orangutan
-                if piece_in_square == 'O' {
+                if piece_in_square == WHITE | ORANGUTAN {
                     game_over = Some(-1);
                 }
-                if piece_in_square == 'o' {
+                if piece_in_square == BLACK | ORANGUTAN {
                     game_over = Some(1);
                 }
             }
@@ -187,17 +257,17 @@ impl Zjvoltis {
         }
 
         // check if the four center squares of the new board has the orangutan
-        if new_board[4][4] == 'O'
-            && new_board[4][5] == 'O'
-            && new_board[5][4] == 'O'
-            && new_board[5][5] == 'O'
+        if new_board[4][4] == WHITE | ORANGUTAN
+            && new_board[4][5] == WHITE | ORANGUTAN
+            && new_board[5][4] == WHITE | ORANGUTAN
+            && new_board[5][5] == WHITE | ORANGUTAN
         {
             game_over = Some(1);
         }
-        if new_board[4][4] == 'o'
-            && new_board[4][5] == 'o'
-            && new_board[5][4] == 'o'
-            && new_board[5][5] == 'o'
+        if new_board[4][4] == BLACK | ORANGUTAN
+            && new_board[4][5] == BLACK | ORANGUTAN
+            && new_board[5][4] == BLACK | ORANGUTAN
+            && new_board[5][5] == BLACK | ORANGUTAN
         {
             game_over = Some(-1);
         }
@@ -236,25 +306,29 @@ impl Zjvoltis {
 }
 
 // Calculate the material, counting +1 for each square white has a piece on, and -1 for each square black has a piece on.
-fn calculate_material(board: &[[char; 10]; 10]) -> i32 {
+fn calculate_material(board: &[[u8; 10]; 10]) -> i32 {
     let mut score = 0;
     for row in 0..10 {
         for col in 0..10 {
-            if board[row][col].is_uppercase() {
-                score += 1;
-            } else if board[row][col].is_lowercase() {
-                score -= 1;
+            if board[row][col] != 0 {
+                if board[row][col] % 2 == 1 {
+                    score -= 1;
+                } else {
+                    score += 1;
+                }
             }
         }
     }
     score
 }
 
+#[inline]
 // Rotate a point around another point by 90 degrees counterclockwise
 fn rotate_point((row, col): (isize, isize), (crow, ccol): (usize, usize)) -> (isize, isize) {
-    let (zrow, zcol) = (row - crow as isize, col - ccol as isize);
-    let (nzrow, nzcol) = (zcol, -zrow);
-    ((nzrow + crow as isize), (nzcol + ccol as isize))
+    (
+        (col - ccol as isize + crow as isize),
+        (crow as isize - row + ccol as isize),
+    )
 }
 
 #[derive(Clone, Copy)]
@@ -296,7 +370,8 @@ pub mod tests {
     fn test_new_game() {
         let game = Zjvoltis::new();
         assert!(game.white_to_move);
-        assert_eq!(game.board[0][0], 'O');
+        assert_eq!(game.board[0][0], WHITE | ORANGUTAN);
+        assert_eq!(game.board[9][9], BLACK | ORANGUTAN);
     }
 
     #[test]
@@ -315,31 +390,33 @@ pub mod tests {
         // Move the Zebra
         let m1 = ZjvoltisMove::from_string("i32");
         let game2 = game.make_move(m1).unwrap();
-        assert_eq!(game2.board[4][9], 'Z');
-        assert_eq!(game2.board[5][9], 'Z');
-        assert_eq!(game2.board[4][8], 'Z');
-        assert_eq!(game2.board[3][8], 'Z');
-        assert_eq!(game2.board[2][7], '.');
-        assert_eq!(game2.board[2][8], '.');
-        assert_eq!(game2.board[1][7], '.');
+        assert_eq!(game2.board[4][9], WHITE | ZEBRA);
+        assert_eq!(game2.board[5][9], WHITE | ZEBRA);
+        assert_eq!(game2.board[4][8], WHITE | ZEBRA);
+        assert_eq!(game2.board[3][8], WHITE | ZEBRA);
+        assert_eq!(game2.board[2][7], 0);
+        assert_eq!(game2.board[2][8], 0);
+        assert_eq!(game2.board[1][7], 0);
         assert!(!game2.white_to_move);
+        println!("{}", game2.to_string());
         // capture the Zebra
         let m2 = ZjvoltisMove::from_string("i63");
         let game3: Zjvoltis = game2.make_move(m2).unwrap();
-        assert_eq!(game3.board[4][9], '.');
-        assert_eq!(game3.board[5][9], 'v');
-        assert_eq!(game3.board[6][8], 'v');
-        assert_eq!(game3.board[4][8], '.');
-        assert_eq!(game3.board[3][8], '.');
+        println!("{}", game3.to_string());
+        assert_eq!(game3.board[4][9], 0);
+        assert_eq!(game3.board[5][9], BLACK | VAMPIRE);
+        assert_eq!(game3.board[6][8], BLACK | VAMPIRE);
+        assert_eq!(game3.board[4][8], 0);
+        assert_eq!(game3.board[3][8], 0);
         // The Zebra has been captured, so the evaluation should be -4
         assert_eq!(game3.evaluate(), -4);
         // capture the Vampire bat
         let m3 = ZjvoltisMove::from_string("j32");
         let game4: Zjvoltis = game3.make_move(m3).unwrap();
-        assert_eq!(game4.board[4][9], 'I');
-        assert_eq!(game4.board[5][9], 'I');
-        assert_eq!(game4.board[6][9], 'I');
-        assert_eq!(game4.board[6][8], '.');
+        assert_eq!(game4.board[4][9], WHITE | INSECT);
+        assert_eq!(game4.board[5][9], WHITE | INSECT);
+        assert_eq!(game4.board[6][9], WHITE | INSECT);
+        assert_eq!(game4.board[6][8], 0);
         // The vampire bat has been captured, so the evaluation should be -1
         assert_eq!(game4.evaluate(), -1);
         // Move the tiger

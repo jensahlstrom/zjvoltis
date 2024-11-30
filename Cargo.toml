@@ -8,3 +8,6 @@ anyhow = "1.0.88"
 im = "15.1.0"
 minimax-alpha-beta = "0.2.0"
 rand = "0.8.5"
+
+[profile.release]
+debug = 1
