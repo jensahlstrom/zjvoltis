@@ -187,7 +187,7 @@ impl Zjvoltis {
 
         // Find the squares this piece covers (except the one we are rotating around).
         let mut squares = Vec::with_capacity(3);
-        for (row, col) in diamond_around_square(m.row, m.col) {
+        for (row, col) in diamond_around_square(m.row, m.col, false) {
             if self.board[row][col] == piece {
                 squares.push((row, col));
             }
@@ -242,15 +242,13 @@ impl Zjvoltis {
             let piece_in_square = self.board[row][col];
             // If it's an enemy piece, remove all of it.
             if piece_in_square != 0 && self.white_to_move != is_white(piece_in_square) {
-                for row in 0..10 {
-                    for col in 0..10 {
-                        if new_board[row][col] == piece_in_square {
-                            new_board[row][col] = 0;
-                            if self.white_to_move {
-                                new_material += 1;
-                            } else {
-                                new_material -= 1;
-                            }
+                for (row, col) in diamond_around_square(row, col, true) {
+                    if new_board[row][col] == piece_in_square {
+                        new_board[row][col] = 0;
+                        if self.white_to_move {
+                            new_material += 1;
+                        } else {
+                            new_material -= 1;
                         }
                     }
                 }
@@ -295,11 +293,14 @@ impl Zjvoltis {
         let mut moves = Vec::with_capacity(32);
         for row in 0..10 {
             for col in 0..10 {
-                for hgrad in 1..3 {
-                    let m = ZjvoltisMove { row, col, hgrad };
-                    let board = self.make_move(m);
-                    if board.is_some() {
-                        moves.push((m, board.unwrap()));
+                if self.board[row][col] != 0 && self.white_to_move == is_white(self.board[row][col])
+                {
+                    for hgrad in 1..3 {
+                        let m = ZjvoltisMove { row, col, hgrad };
+                        let board = self.make_move(m);
+                        if board.is_some() {
+                            moves.push((m, board.unwrap()));
+                        }
                     }
                 }
             }
@@ -317,11 +318,11 @@ impl Zjvoltis {
 
 // Create a vector of squares in a diamond around the specified square
 // This is all the squares that a piece can be on if it's on the specificed square
-fn diamond_around_square(row: usize, col: usize) -> Vec<(usize, usize)> {
+fn diamond_around_square(row: usize, col: usize, include_self: bool) -> Vec<(usize, usize)> {
     let mut squares = Vec::with_capacity(24);
     for i in 0..4 {
         for j in 0..4 {
-            if !(i == 0 && j == 0) && i + j < 4 {
+            if !(i == 0 && j == 0 && !include_self) && i + j < 4 {
                 if row + i < 10 && col + j < 10 {
                     squares.push((row + i, col + j));
                 }
