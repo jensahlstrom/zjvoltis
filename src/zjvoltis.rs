@@ -185,22 +185,18 @@ impl Zjvoltis {
             return None;
         }
 
-        let mut squares = Vec::new();
-        let mut game_over = None;
-        let mut new_material = self.material;
-
-        // Find the rest of the squares the piece occupies
-        for row in 0..10 {
-            for col in 0..10 {
-                if !(row == m.row && col == m.col) && self.board[row][col] == piece {
-                    squares.push((row, col));
-                }
+        // Find the squares this piece covers (except the one we are rotating around).
+        let mut squares = Vec::with_capacity(3);
+        for (row, col) in diamond_around_square(m.row, m.col) {
+            if self.board[row][col] == piece {
+                squares.push((row, col));
             }
         }
 
-        let mut new_squares = Vec::new();
+        // Find the new squares after the rotation.
+        let mut new_squares = Vec::with_capacity(3);
 
-        // Rotate the piece using the squares found
+        // Rotate all the squares of the piece using the squares found
         for (row, col) in &squares {
             let (new_row, new_col) = match m.hgrad {
                 1 => rotate_point((*row as isize, *col as isize), (m.row, m.col)),
@@ -234,6 +230,8 @@ impl Zjvoltis {
 
         // Perform the move.
         let mut new_board = self.board.clone();
+        let mut game_over = None;
+        let mut new_material = self.material;
 
         // Clear the old squares
         for (row, col) in &squares {
@@ -294,7 +292,7 @@ impl Zjvoltis {
 
     // Generate valid moves for the current player.
     pub fn generate_moves(&self) -> Vec<(ZjvoltisMove, Zjvoltis)> {
-        let mut moves = Vec::new();
+        let mut moves = Vec::with_capacity(32);
         for row in 0..10 {
             for col in 0..10 {
                 for hgrad in 1..3 {
@@ -315,6 +313,31 @@ impl Zjvoltis {
         }
         self.material
     }
+}
+
+// Create a vector of squares in a diamond around the specified square
+// This is all the squares that a piece can be on if it's on the specificed square
+fn diamond_around_square(row: usize, col: usize) -> Vec<(usize, usize)> {
+    let mut squares = Vec::with_capacity(24);
+    for i in 0..4 {
+        for j in 0..4 {
+            if !(i == 0 && j == 0) && i + j < 4 {
+                if row + i < 10 && col + j < 10 {
+                    squares.push((row + i, col + j));
+                }
+                if j != 0 && row + i < 10 && col >= j {
+                    squares.push((row + i, col - j));
+                }
+                if i != 0 && row >= i && col + j < 10 {
+                    squares.push((row - i, col + j));
+                }
+                if i != 0 && j != 0 && row >= i && col >= j {
+                    squares.push((row - i, col - j));
+                }
+            }
+        }
+    }
+    squares
 }
 
 // Calculate the material, counting +1 for each square white has a piece on, and -1 for each square black has a piece on.
