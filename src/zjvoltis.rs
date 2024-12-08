@@ -303,7 +303,6 @@ impl Zjvoltis {
                         }
                     }
                 }
-                println!();
             }
         }
         moves
