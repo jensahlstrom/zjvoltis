@@ -295,7 +295,7 @@ impl Zjvoltis {
             for col in 0..10 {
                 if self.board[row][col] != 0 && self.white_to_move == is_white(self.board[row][col])
                 {
-                    for hgrad in 1..3 {
+                    for hgrad in 1..4 {
                         let m = ZjvoltisMove { row, col, hgrad };
                         let board = self.make_move(m);
                         if board.is_some() {
@@ -303,6 +303,7 @@ impl Zjvoltis {
                         }
                     }
                 }
+                println!();
             }
         }
         moves
@@ -434,11 +435,9 @@ pub mod tests {
         assert_eq!(game2.board[2][8], 0);
         assert_eq!(game2.board[1][7], 0);
         assert!(!game2.white_to_move);
-        println!("{}", game2.to_string());
         // capture the Zebra
         let m2 = ZjvoltisMove::from_string("i63");
         let game3: Zjvoltis = game2.make_move(m2).unwrap();
-        println!("{}", game3.to_string());
         assert_eq!(game3.board[4][9], 0);
         assert_eq!(game3.board[5][9], BLACK | VAMPIRE);
         assert_eq!(game3.board[6][8], BLACK | VAMPIRE);
@@ -485,8 +484,8 @@ pub mod tests {
     fn test_initial_moves() {
         let game = Zjvoltis::new();
         let moves = game.generate_moves();
-        // There are ten legal moves for the white player
-        assert_eq!(moves.len(), 10);
+        // There are fifteen legal moves for the white player
+        assert_eq!(moves.len(), 15);
     }
 
     #[test]
