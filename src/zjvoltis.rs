@@ -1,3 +1,7 @@
+include!("minimax.rs");
+use std::sync::mpsc;
+use std::time::SystemTime;
+
 // Square values
 // first bit for color
 const WHITE: u8 = 0;
@@ -397,6 +401,77 @@ impl ZjvoltisMove {
         )
     }
 }
+
+
+/// Holds the result of an analysis, including the best move and board states
+pub struct AnalysisResult {
+    pub best_move: ZjvoltisMove,
+    pub position_before: String,
+    pub position_after: String,
+}
+
+/// Analyze a series of moves up to a specified depth level
+///
+/// # Arguments:
+/// - `moves`: A list of opening moves to apply to the game.
+/// - `level`: The depth at which to terminate the analysis.
+///
+/// # Returns:
+/// - An `AnalysisResult` containing the best move and board states.
+pub fn analyze_moves(moves: &[&str], level: i32) -> AnalysisResult {
+    // Initialize a new game
+    let mut game = Zjvoltis::new();
+
+    // Apply all opening moves to the game
+    for m in moves {
+        game = game.make_move(ZjvoltisMove::from_string(m)).unwrap();
+    }
+
+    // Save the initial game state before analysis
+    let old_game = game.clone();
+
+    // Create a channel for communicating analysis results
+    let (tx, rx) = mpsc::channel();
+
+    // Spawn a thread to perform the game analysis
+    std::thread::spawn(move || {
+        iterate(game, tx);
+    });
+
+    // Variables to store the best move and the updated game state
+    let mut best_move = None;
+    let mut new_game = old_game.clone();
+
+    // Loop until the specified depth is reached
+    loop {
+        let (depth, score, m, nodes, elapsed) = rx.recv().unwrap();
+
+        if let Some(m) = m {
+            best_move = Some(m.clone());
+            new_game = old_game.make_move(m).unwrap();
+        }
+
+        println!(
+            "Depth: {} Score: {} Nodes: {} Elapsed: {}s",
+            depth,
+            score,
+            nodes,
+            elapsed.as_secs_f64()
+        );
+        // Break the loop when the analysis reaches the specified depth
+        if depth == level {
+            break;
+        }
+    }
+
+    // Return the analysis result
+    AnalysisResult {
+        best_move: best_move.unwrap(),
+        position_before: old_game.to_string(),
+        position_after: new_game.to_string(),
+    }
+}
+
 
 #[cfg(test)]
 pub mod tests {
