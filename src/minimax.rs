@@ -1,8 +1,6 @@
 use std::sync::mpsc::Sender;
 use std::time::Duration;
 
-use crate::zjvoltis::{Zjvoltis, ZjvoltisMove};
-
 fn iterate(game: Zjvoltis, channel: Sender<(i32, i32, Option<ZjvoltisMove>, i32, Duration)>) {
     let mut depth = 1;
     loop {
