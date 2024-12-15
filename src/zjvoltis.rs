@@ -380,7 +380,8 @@ pub struct ZjvoltisMove {
 impl ZjvoltisMove {
     // Create a move from a string like "e51"
     pub fn from_string(s: &str) -> ZjvoltisMove {
-        let mut chars = s.chars();
+		let len = s.chars().count();
+		let mut chars = s.chars().skip(len - 3);
         let col = chars.next().unwrap() as usize - 'a' as usize;
         let row = chars.next().unwrap() as usize - '0' as usize;
         let hgrad = chars.next().unwrap() as usize - '0' as usize;
